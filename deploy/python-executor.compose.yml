@@ -1,0 +1,45 @@
+name: nodulo-python-executor
+
+services:
+  sandbox-image-build:
+    image: nodulo-python-sandbox:1.0
+    build:
+      context: ../core-nodulo
+      dockerfile: Dockerfile.python-sandbox
+    entrypoint: ["python", "-c"]
+    command: ["import numpy, matplotlib; print('sandbox image ready')"]
+    restart: "no"
+
+  python-executor:
+    image: nodulo-python-executor:1.0
+    build:
+      context: ../core-nodulo
+      dockerfile: Dockerfile.python-executor
+    environment:
+      PYTHON_EXECUTOR_ADDR: ":8080"
+      PYTHON_EXECUTOR_TOKEN: ${PYTHON_EXECUTOR_TOKEN:?Configure um token aleatório de pelo menos 32 caracteres}
+      PYTHON_EXECUTOR_CONCURRENCY: ${PYTHON_EXECUTOR_CONCURRENCY:-2}
+      NODULO_PYTHON_SANDBOX_IMAGE: nodulo-python-sandbox:1.0
+    group_add:
+      - ${DOCKER_GID:?Configure com o GID do grupo dono de /var/run/docker.sock no servidor}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      sandbox-image-build:
+        condition: service_completed_successfully
+    networks:
+      coolify:
+        aliases:
+          - nodulo-python-executor
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:8080/healthz"]
+      interval: 20s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+networks:
+  coolify:
+    external: true
+    name: ${PYTHON_EXECUTOR_NETWORK:-coolify}
