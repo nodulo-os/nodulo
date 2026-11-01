@@ -77,6 +77,8 @@ services:
         condition: service_completed_successfully
       ingestion-storage-init:
         condition: service_completed_successfully
+      seed-admin:
+        condition: service_completed_successfully
 
   sandbox-image-build:
     profiles: ["python"]
@@ -152,17 +154,17 @@ services:
         condition: service_healthy
 
   seed-admin:
-    profiles: ["setup"]
     build:
       context: ./core-nodulo
       dockerfile: Dockerfile
       args:
         MAIN_PACKAGE: ./cmd/seed-admin
+    restart: "no"
     environment:
-      DATABASE_URL: postgres://${POSTGRES_USER:-nodulo}:${POSTGRES_PASSWORD:?Configure POSTGRES_PASSWORD in .env}@postgres:5432/${POSTGRES_DB:-nodulo}?sslmode=disable
-      ADMIN_EMAIL: ${ADMIN_EMAIL:-}
-      ADMIN_NAME: ${ADMIN_NAME:-}
-      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
+      DATABASE_URL: postgres://${POSTGRES_USER:-nodulo}:${POSTGRES_PASSWORD:?Configure POSTGRES_PASSWORD no .env}@postgres:5432/${POSTGRES_DB:-nodulo}?sslmode=disable
+      ADMIN_EMAIL: ${ADMIN_EMAIL:?Defina ADMIN_EMAIL no .env}
+      ADMIN_NAME: ${ADMIN_NAME:?Defina ADMIN_NAME no .env}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?Defina ADMIN_PASSWORD no .env}
     depends_on:
       db-migrate:
         condition: service_completed_successfully
