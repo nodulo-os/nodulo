@@ -1,0 +1,27 @@
+# syntax=docker/dockerfile:1
+
+FROM golang:1.27.3-alpine AS builder
+
+WORKDIR /src
+COPY go.mod go.sum ./
+RUN go mod download
+COPY . .
+RUN CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags="-s -w" -o /out/python-executor ./cmd/python-executor
+
+FROM alpine:3.24 AS runner
+
+RUN apk add --no-cache ca-certificates tzdata docker-cli wget \
+    && addgroup -S -g 10001 app \
+    && adduser -S -u 10001 -G app -h /nonexistent app
+
+WORKDIR /app
+COPY --from=builder --chown=app:app /out/python-executor /app/python-executor
+
+ENV PYTHON_EXECUTOR_ADDR=:8080
+EXPOSE 8080
+USER app:app
+
+HEALTHCHECK --interval=20s --timeout=4s --start-period=10s --retries=3 \
+    CMD wget -q --spider http://127.0.0.1:8080/healthz || exit 1
+
+ENTRYPOINT ["/app/python-executor"]
