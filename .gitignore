@@ -1,0 +1,32 @@
+# Local configuration and secrets
+.env
+.env.*
+!.env.example
+**/.env
+**/.env.*
+!**/.env.example
+
+# Go
+**/bin/
+**/dist/
+*.test
+*.out
+
+# Node.js / Next.js
+**/node_modules/
+**/.next/
+**/out/
+**/coverage/
+**/*.tsbuildinfo
+
+.next-dev
+
+.env
+
+# Uploaded source files for durable document ingestion can contain private data.
+**/data/ingestion/
+backups/
+
+# Local tools and OS files
+.DS_Store
+Thumbs.db
